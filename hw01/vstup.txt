@@ -1,0 +1,6 @@
+PATH test_file_A.txt
+PATH test_file_B.txt
+PATH test_dir
+PATH symlink_to_A
+PATH broken_symlink
+PATH neexistujici_soubor

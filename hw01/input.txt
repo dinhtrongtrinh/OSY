@@ -1,0 +1,2 @@
+PATH test_dir
+PATH test_dir/soubor1.txt
