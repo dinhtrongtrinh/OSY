@@ -162,11 +162,10 @@ void worker_thread_func(Worker *w) {
             }
             if (found) break; 
         }
-
-        if (found && factory.idle_machines[w->place_type] > 0) {
-        } else {
-            found = false; 
-        }
+        // zmenil jsem if
+        if (factory.idle_machines[w->place_type] <= 0) {
+            found = false;
+        } 
 
         if (!found) {
             if (factory.eof_received) {

@@ -1,0 +1,14 @@
+#everything with compression
+*.7z
+*.bz2
+*.gz
+*.rar
+*.tar
+*.zip
+#every compiled file
+*.class
+*.o
+*.so
+*.dll
+*.exe
+#logs and databases
