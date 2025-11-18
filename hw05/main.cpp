@@ -71,7 +71,6 @@ struct Factory {
     int idle_machines[_PLACE_COUNT] = {0};
     int pending_remove[_PLACE_COUNT] = {0};
 
-    // tady jsem vymazal konstruktor, ktery inicializoval pole na nuly
     int parts[_PRODUCT_COUNT][PHASE_COUNT] = {0};
     int parts_in_progress[_PRODUCT_COUNT][PHASE_COUNT] = {0};
 
@@ -162,7 +161,6 @@ void worker_thread_func(Worker *w) {
             }
             if (found) break; 
         }
-        // zmenil jsem if
         if (factory.idle_machines[w->place_type] <= 0) {
             found = false;
         } 
