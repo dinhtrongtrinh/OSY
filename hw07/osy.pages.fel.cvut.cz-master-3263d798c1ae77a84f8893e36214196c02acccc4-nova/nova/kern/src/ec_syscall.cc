@@ -2,6 +2,21 @@
 #include "ptab.h"
 #include "kalloc.h"
 #include "string.h"
+void *operator new (unsigned int size)
+{
+    (void)size;
+    return Kalloc::allocator.alloc_page(1, Kalloc::FILL_0);
+}
+
+void operator delete (void *p)
+{
+    if (p) Kalloc::allocator.free_page(p);
+}
+void operator delete (void *p, unsigned int size)
+{
+    (void)size;
+    if (p) Kalloc::allocator.free_page(p);
+}
 
 typedef enum {
     sys_print      = 1,
@@ -11,10 +26,17 @@ typedef enum {
     sys_thr_yield  = 5,
 } Syscall_numbers;
 
+struct ThreadItem{
+    Ec *ec;
+    ThreadItem *next;
+};
+static ThreadItem *current_thread_item = 0;
+
 void Ec::syscall_handler (uint8 a)
 {
     Sys_regs * r = current->sys_regs();
     Syscall_numbers number = static_cast<Syscall_numbers> (a);
+    
 
     switch (number) {
         case sys_print: {
@@ -115,6 +137,52 @@ void Ec::syscall_handler (uint8 a)
             r->eax = old_brk;
 
             nbrk_end:
+            break;
+        }
+        case sys_thr_create: {
+            mword start_routine = r->esi;
+            mword stack_top = r->edi;
+
+            Ec *new_ec = new Ec();
+            if(!new_ec) { r->eax = 1; break; }
+
+            new_ec->regs.eip = start_routine;
+            new_ec->regs.esp = stack_top; 
+
+            new_ec->regs.edx = start_routine;
+            new_ec->regs.ecx = stack_top;
+
+
+            ThreadItem *new_item = new ThreadItem();
+            if(!new_item) break;
+            new_item->ec = new_ec;
+
+            if(current_thread_item == 0){
+                ThreadItem *root_item = new ThreadItem();
+                if(!root_item) break;
+
+                root_item->ec = Ec::current;
+
+                root_item->next = new_item;
+                new_item->next = root_item;
+
+                current_thread_item = root_item;
+            }   
+            else{
+                new_item->next = current_thread_item->next;
+                current_thread_item->next = new_item;
+            }
+            r->eax = 0;
+            break;
+        }
+        case sys_thr_yield: {
+            if (current_thread_item == 0 || current_thread_item->next == current_thread_item) {
+                break;
+            }
+            current_thread_item = current_thread_item->next;
+            Ec::current = current_thread_item->ec;
+            Ec::current->make_current();
+            Ec::ret_user_sysexit();
             break;
         }
         default:
